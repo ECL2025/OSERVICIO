@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Nota de Venta Electronica</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 450px;
+            padding: 25px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #006;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="login-container">
+        <h1>Iniciar Sesión</h1>
+        <form id="login-form">
+            <div>
+                <strong>RUC:</strong>
+                <input type="text" id="username" required>
+            </div>
+            <div>
+                <strong>Contraseña:</strong>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+    </div>
+
+    <div class="container hidden" id="content-container">
+        <h1>Generar Nota de Venta Electronica</h1>
+
+        <form id="boleta-form">
+            <div>
+                <strong>Empresa:</strong>
+                <input type="text" id="empresa" name="empresa" required readonly>
+            </div>
+
+            <div>
+                <strong>Dirección:</strong>
+                <input type="text" id="direccion" name="direccion" required readonly>
+            </div>
+
+            <div>
+                <strong>RUC:</strong>
+                <input type="text" id="ruc" name="ruc" required readonly>
+            </div>
+
+            <div>
+                <strong>Fecha:</strong>
+                <input type="text" id="fecha" name="fecha" required readonly>
+            </div>
+
+            <div>
+
+
+            </div>
+
+            <div>
+                <strong>DNI:</strong>
+                <input type="text" id="dni" name="dni">
+            </div>
+
+            <div>
+                <strong>Nombre:</strong>
+                <input type="text" id="nombre" name="nombre" value=""> <!-- Aquí se deja vacío para llenarlo manualmente -->
+            </div>
+
+            <table id="productos-table">
+                <thead>
+                    <tr>
+                        <th>Cantidad</th>
+                        <th>Producto</th>
+                        <th>Valor Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="number" id="cantidad1" name="cantidad1" required oninput="calcularTotal()"></td>
+                        <td><input type="text" id="producto1" name="producto1" required></td>
+                        <td><input type="number" id="precio1" name="precio1" required oninput="calcularTotal()"></td>
+                        <td><input type="text" id="total1" name="total1" readonly></td>
+                    </tr>
+                    <tr>
+                        <td><input type="number" id="cantidad2" name="cantidad2" oninput="calcularTotal()"></td>
+                        <td><input type="text" id="producto2" name="producto2"></td>
+                        <td><input type="number" id="precio2" name="precio2" oninput="calcularTotal()"></td>
+                        <td><input type="text" id="total2" name="total2" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="total-container">
+                <div><strong>Importe Total:</strong></div>
+                <div><input type="text" id="totalGeneral" name="totalGeneral" readonly></div>
+            </div>
+
+            <div class="total-container" id="expresion-container" style="display: none;">
+                <div><strong>Expresión en Letras:</strong></div>
+                <div><input type="text" id="totalLetras" name="totalLetras" readonly></div>
+            </div>
+
+            <input type="hidden" id="nota-venta" name="nota-venta">
+
+            <div>
+                <button type="submit">Generar Orden</button>
+            </div>
+        </form>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        // Función para manejar el login
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Validación de usuarios
+            if ((username === '10744564480' && password === 'jose14') || 
+                (username === '10744564498' && password === 'elison245')) {
+                
+                // Mostrar formulario de generación de boleta
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('content-container').classList.remove('hidden');
+                
+                // Rellenar los campos con los datos del usuario
+                if (username === '10744564480') {
+                    document.getElementById('empresa').value = "Importaciones - Soporte Tecnico ANDROID TV";
+                    document.getElementById('direccion').value = "Calle Nueva 438 Interior-Santiago-Cusco";
+                    document.getElementById('ruc').value = "10744564480";
+                    document.getElementById('nombre').value = ""; // Nombre vacío para llenar manualmente
+                } else if (username === '10744564498') {
+                    document.getElementById('empresa').value = "ElisonProIMpoRt-El pro de House";
+                    document.getElementById('direccion').value = "Calle Colosal- Centro Historico kamecaus";
+                    document.getElementById('ruc').value = "10744564498";
+                    document.getElementById('nombre').value = ""; // Nombre vacío para llenar manualmente
+                }
+                
+                obtenerFechaActual(); // Llamar a la función para obtener la fecha actual
+            } else {
+                alert('Credenciales incorrectas');
+            }
+        })
+
+		
+		// 
+		
+		// Función para obtener la fecha actual y mostrarla en el campo de fecha
+        function obtenerFechaActual() {
+            const fecha = new Date();
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const anio = fecha.getFullYear();
+            const fechaFormateada = `${dia}-${mes}-${anio}`;
+            document.getElementById('fecha').value = fechaFormateada;
+        }
+	
+        // Función para actualizar la dirección según la empresa seleccionada
+        function actualizarDireccion() {
+            const empresa = document.getElementById('empresa').value;
+            const direccion = document.getElementById('direccion');
+            const ruc = document.getElementById('ruc');
+    
+            if (empresa === "Importaciones - Soporte Tecnico ANDROID TV") {
+                direccion.value = "Calle Nueva 438 Interior-Santiago-Cusco";
+                ruc.value = "10744564480";  // RUC de la empresa
+            } else {
+                direccion.value = "";
+                ruc.value = "";  // Limpiar el campo RUC
+            }
+        }
+
+        // Función para calcular el total de cada producto y el total general
+        function calcularTotal() {
+            const cantidad1 = parseFloat(document.getElementById('cantidad1').value) || 0;
+            const precio1 = parseFloat(document.getElementById('precio1').value) || 0;
+            const total1 = cantidad1 * precio1;
+            document.getElementById('total1').value = total1.toFixed(2);
+
+            const cantidad2 = parseFloat(document.getElementById('cantidad2').value) || 0;
+            const precio2 = parseFloat(document.getElementById('precio2').value) || 0;
+            const total2 = cantidad2 * precio2;
+            document.getElementById('total2').value = total2.toFixed(2);
+
+            // Calcular el total general
+            const totalGeneral = (parseFloat(total1) || 0) + (parseFloat(total2) || 0);
+            document.getElementById('totalGeneral').value = totalGeneral.toFixed(2);
+
+            // Convertir el total a letras
+            const totalEnLetras = numeroALetras(Math.floor(totalGeneral)) + " CON " + (totalGeneral % 1).toFixed(2).slice(2) + "/100 SOLES";
+            document.getElementById('totalLetras').value = totalEnLetras;
+
+            // Mostrar la sección de expresión en letras solo si el total es mayor que 0
+            if (totalGeneral > 0) {
+                document.getElementById('expresion-container').style.display = "flex";
+            } else {
+                document.getElementById('expresion-container').style.display = "none";
+            }
+        }
+
+       
+	   
+	   
+	   
+function numeroALetras(num) {
+    const unidades = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE", "DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISEIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
+    const decenas = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+    const centenas = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+
+    // Para números menores a 10
+    if (num < 10) {
+        return `SON ${unidades[num]}`;
+    }
+
+    // Para números menores a 20
+    if (num < 20) {
+        return `SON ${unidades[num]}`;
+    }
+
+    // Para números menores a 100
+    if (num < 100) {
+        const d = Math.floor(num / 10);
+        const u = num % 10;
+
+        if (d === 2 && u > 0) {
+            return `SON VEINTI${unidades[u]}`;
+        }
+        return `SON ${decenas[d]}${u > 0 ? " Y " + unidades[u] : ""}`;
+    }
+
+    // Para números menores a 1000
+    if (num < 1000) {
+        const c = Math.floor(num / 100);
+        const remainder = num % 100;
+        
+        // Corrigiendo el manejo de "CIENTO"
+        if (c === 1 && remainder === 0) {
+            return `SON CIEN`;
+        }
+
+        return `SON ${centenas[c]}${remainder > 0 ? " " + numeroALetras(remainder).slice(3) : ""}`;
+    }
+
+    // Para números menores a 10000
+    if (num < 10000) {
+        const m = Math.floor(num / 1000);
+        const remainder = num % 1000;
+        return m === 1 ? `SON MIL ${numeroALetras(remainder).slice(3)}` : `SON ${unidades[m]} MIL ${numeroALetras(remainder).slice(3)}`;
+    }
+
+    return "Número fuera de rango";
+}
+
+
+
+
+
+        // Función para emitir el PDF con jsPDF
+        function emitirPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'  // Tamaño A4
+            });
+
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+
+            // Título de la boleta (alineado a la derecha)
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(13);
+const textWidth1 = doc.getTextWidth('ORDEN DE SERVICIO');
+
+// Agregar espacio adicional para asegurarse de que no quede pegado al borde
+const rightX = pageWidth - margin - textWidth1 - 7;  // Añadir un margen de 10 unidades a la derecha
+
+doc.text('ORDEN DE SERVICIO', rightX, margin + 10);  // Alineado a la derecha con espacio
+			
+		
+			
+// Agregar un marco alrededor de los datos (RUC)
+const boxMargin = 20;  // Un margen interno dentro del cuadro
+const boxHeight = 20;  // Altura del cuadro
+const spaceRight = 5; // Espacio adicional entre el cuadro y el borde derecho
+const boxWidth = pageWidth - margin * 2 - 115 - spaceRight;  // Ajustar el ancho del cuadro y dejar espacio adicional
+
+// Dibujar el rectángulo (cuadro) a la derecha, encima de "ORDEN DE SERVICIO"
+doc.setLineWidth(0.5);  // Establecer el grosor de la línea para el marco
+doc.rect(pageWidth - margin - boxWidth - spaceRight, margin + 5, boxWidth, boxHeight);  // Dibuja el rectángulo (cuadro) en la página, ajustado a la derecha con espacio adicional
+
+			
+
+// CUADRO 2
+const boxMargin1 = 3;  // Un margen interno dentro del cuadro
+const boxHeight1 = 180;  // Altura del cuadro
+const boxWidth1 = pageWidth - margin * 2 - 3	;  // Ajustar el ancho del cuadro, y dejar espacio MAS GRADE EL NUMERO MAS PEQUEÑO para "ORDEN DE SERVICIO"
+
+// Dibujar el rectángulo (cuadro) a la derecha, encima de "ORDEN DE SERVICIO"
+doc.setLineWidth(0.3);  // Establecer el grosor de la línea para el marco
+doc.rect(pageWidth - margin - boxWidth1, margin + 3, boxWidth1, boxHeight1);  // Dibuja el rectángulo (cuadro) en la página PARA SUBIR BAJAR
+			
+
+// CUADRO 3
+const boxMargin2 = 3;  // Un margen interno dentro del cuadro
+const boxHeight2 = 25;  // Altura del cuadro
+const boxWidth2 = pageWidth - margin * 2 - 7 - spaceRight;  // Ajustar el ancho del cuadro, y dejar espacio MAS GRADE EL NUMERO MAS PEQUEÑO para "ORDEN DE SERVICIO"
+
+// Dibujar el rectángulo (cuadro) a la derecha, encima de "ORDEN DE SERVICIO"
+doc.setLineWidth(0.3);  // Establecer el grosor de la línea para el marco
+doc.rect(pageWidth - margin - boxWidth2 - spaceRight, margin + 75, boxWidth2, boxHeight2);  // Dibuja el rectángulo (cuadro) en la página PARA SUBIR BAJAR
+
+// CUADRO 4
+const boxMargin3 = 3;  // Un margen interno dentro del cuadro
+const boxHeight3 = 7;  // Altura del cuadro
+const boxWidth3= pageWidth - margin * 2 - 7 - spaceRight;  // Ajustar el ancho del cuadro, y dejar espacio MAS GRADE EL NUMERO MAS PEQUEÑO para "ORDEN DE SERVICIO"
+
+// Dibujar el rectángulo (cuadro) a la derecha, encima de "ORDEN DE SERVICIO"
+doc.setLineWidth(0.3);  // Establecer el grosor de la línea para el marco
+doc.rect(pageWidth - margin - boxWidth3 - spaceRight, margin + 75, boxWidth3, boxHeight3);  // Dibuja el rectángulo (cuadro) en la página PARA SUBIR BAJAR
+
+// CUADRO 5
+const boxMargin4 = 3;  // Un margen interno dentro del cuadro
+const boxHeight4 = 82;  // Altura del cuadro
+const boxWidth4= pageWidth - margin * 2 - 7 - spaceRight;  // Ajustar el ancho del cuadro, y dejar espacio MAS GRADE EL NUMERO MAS PEQUEÑO para "ORDEN DE SERVICIO"
+
+// Dibujar el rectángulo (cuadro) a la derecha, encima de "ORDEN DE SERVICIO"
+doc.setLineWidth(0.3);  // Establecer el grosor de la línea para el marco
+doc.rect(pageWidth - margin - boxWidth4 - spaceRight, margin + 75, boxWidth4, boxHeight4);  // Dibuja el rectángulo (cuadro) en la página PARA SUBIR BAJAR
+
+
+
+// Definir las coordenadas para la línea
+const startX = margin + 7;  // Coordenada X de inicio (puedes ajustar según el margen)
+const startY = margin + 28;  // Coordenada Y de inicio (ajustada para la posición vertical)
+const endX = pageWidth - margin;  // Coordenada X de fin (ancho de la página)
+const endY = startY;  // La línea será horizontal, por lo que Y de fin es la misma
+
+// Establecer el grosor de la línea
+doc.setLineWidth(0.2);  // Grosor de la línea
+
+// Dibujar la línea en el PDF
+doc.line(startX, startY, endX, endY);  // Dibuja la línea horizontal
+
+
+
+                // Agregar texto estático "OS001-2025OO1"
+doc.setFont('helvetica', 'normal');
+doc.setFontSize(12);
+
+// Obtener el ancho del texto
+const staticText = 'OS001-2025OO1';
+const textWidth = doc.getTextWidth(staticText);
+
+// Calcular la posición x para alinearlo a la derecha con un espacio adicional
+const rightAlignX = pageWidth - margin - textWidth - 15; // Espacio adicional de 10 unidades
+
+// Insertar el texto alineado a la derecha con el espacio adicional
+doc.text(staticText, rightAlignX, margin + 16);  // Texto alineado a la derecha en el PDF
+
+			
+		
+		// Agregar texto estático "Tipo de Moneda"
+const tipoMoneda = "Soles";  // Ejemplo de tipo de moneda (puedes personalizarlo)
+doc.setFont('helvetica', 'normal');  // Cambiar la fuente a normal
+doc.setFontSize(12);  // Establecer el tamaño de la letra a 12
+doc.text(`Tipo de Moneda: ${tipoMoneda}`, margin + 8, margin + 60);  // Colocar "Tipo de Moneda" en el PDF
+
+// Agregar texto estático "Observaciones"
+const observaciones = "Sin observaciones";  // Ejemplo de observaciones (puedes personalizarlo)
+doc.text(`Observaciones: ${observaciones}`, margin + 8, margin + 67);  // Colocar "Observaciones" en el PDF
+	
+
+
+
+			
+// Agregar texto estático largo (introducirlo en varias líneas)
+const textoEstatico = `
+   Bienvenidos a nuestro negocio de servicio técnico, nos especializamos en la reparación de televisores y equipos electrónicos, 
+          garantizando su óptimo funcionamiento. Además, ofrecemos una amplia gama de repuestos y accesorios para satisfacer 
+                todas sus necesidades. Nuestro compromiso es brindar un servicio excepcional y soluciones de alta calidad.
+                                    Este documento constituye crédito fiscal, es emitido para el control interno de las ventas.`;
+
+// Establecer la fuente en cursiva y el tamaño
+doc.setFont('helvetica', 'italic');  // Establecer la fuente a cursiva
+doc.setFontSize(8);  // Establecer el tamaño de la letra
+
+// Dividir el texto largo en líneas que se ajusten al ancho de la página
+const textoDividido = doc.splitTextToSize(textoEstatico, pageWidth - margin * 2);
+
+// Calcular el punto de inicio para centrar el texto en la página
+const textX = (pageWidth - margin * 2 - 135) / 2;  // Centrar horizontalmente (margen izquierdo y derecho)
+let textY = margin + 160;  // Posición inicial vertical para el texto
+
+// Agregar el texto dividido y centrado
+doc.text(textoDividido, textX, textY);
+		
+		
+		
+		
+		// Agregar texto estático largo (introducirlo en varias líneas)
+const textoEstatico21 = `
+Op. Gravada
+Op. Exonerada
+Op. Inafecta
+ISC
+IGV
+Otros Cargos
+Otros Tributos
+Monto de Redondeo`;
+
+// Establecer la fuente en cursiva y el tamaño
+doc.setFont('helvetica', 'normal');  // Establecer la fuente a cursiva
+doc.setFontSize(12);  // Establecer el tamaño de la letra
+
+// Dividir el texto largo en líneas que se ajusten al ancho de la página
+const textoDividido21 = doc.splitTextToSize(textoEstatico21, pageWidth - margin * 2);
+
+// Calcular el punto de inicio para centrar el texto en la página
+const textX21 = (pageWidth - margin* 2 - 50);  // Centrar horizontalmente (margen izquierdo y derecho)
+let textY21 = margin + 108;  // Posición inicial vertical para el texto
+
+// Agregar el texto dividido y centrado
+doc.text(textoDividido21, textX21, textY21);  // Usar textoDividido21 en lugar de textoDividido
+
+		
+		// Agregar texto estático largo (introducirlo en varias líneas)
+const textoEstatico22 = `
+: S/.    -
+: S/.    - 
+: S/.    -
+: S/.    -
+: S/.    -
+: S/.    -
+: S/.    -
+: S/.    -`;
+
+// Establecer la fuente en cursiva y el tamaño
+doc.setFont('helvetica', 'normal');  // Establecer la fuente a cursiva
+doc.setFontSize(12);  // Establecer el tamaño de la letra
+
+// Dividir el texto largo en líneas que se ajusten al ancho de la página
+const textoDividido22 = doc.splitTextToSize(textoEstatico22, pageWidth - margin * 2);
+
+// Calcular el punto de inicio para centrar el texto en la página
+const textX22 = (pageWidth - margin* 2 - 10);  // Centrar horizontalmente (margen izquierdo y derecho)
+let textY22 = margin + 108;  // Posición inicial vertical para el texto
+
+// Agregar el texto dividido y centrado
+doc.text(textoDividido22, textX22, textY22);  // Usar textoDividido21 en lugar de textoDividido
+
+			
+			// Obtener la hora actual
+            const horaActual = new Date();
+            const horas = String(horaActual.getHours()).padStart(2, '0');
+            const minutos = String(horaActual.getMinutes()).padStart(2, '0');
+            const segundos = String(horaActual.getSeconds()).padStart(2, '0');
+            const horaFormateada = `${horas}:${minutos}:${segundos}`;  // Formato HH:MM:SS
+
+            // Agregar la hora actual al PDF
+            doc.setFont('helvetica', 'normal');  // Cambiar la fuente a normal
+            doc.setFontSize(12);  // Establecer el tamaño de la letra a 12
+            doc.text(`Hora: ${horaFormateada}`, margin + 8, margin + 39);  // Hora actual alineada a la izquierda en el PDF
+
+            // Agregar datos al PDF
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);	
+            doc.text(`Fecha: ${document.getElementById('fecha').value}`, margin + 8, margin + 33);
+            doc.text(`DNI: ${document.getElementById('dni').value}`, margin + 8, margin + 46);
+            doc.text(`Nombre del Cliente: ${document.getElementById('nombre').value}`, margin + 8, margin + 53);
+
+            // Mostrar la empresa, dirección y RUC
+            const empresa = document.getElementById('empresa').value;
+            const direccion = document.getElementById('direccion').value;
+            const ruc = document.getElementById('ruc').value;
+
+// Establecer la fuente a negrita para "empresa"
+doc.setFont('helvetica', 'bold');  // Establecer la fuente a negrita
+doc.text(`${empresa}`, margin + 8, margin + 10);  // Texto de la empresa
+
+// Establecer la fuente a normal para "dirección"
+doc.setFont('helvetica', 'normal');  // Establecer la fuente a normal
+doc.text(`${direccion}`, margin + 8, margin + 16);  // Texto de la dirección
+
+            // Alineación del RUC a la derecha
+            const textWidthRuc = doc.getTextWidth(`RUC: ${ruc}`);
+            doc.text(`RUC: ${ruc}`, pageWidth - margin - textWidthRuc - 13, margin + 22);  // RUC alineado a la derecha con espacio de 10 unidades
+
+            let yPosition = margin + 80;
+
+            // Producto 1 (solo texto)
+            doc.text(`Producto`, margin + 8, yPosition);
+            doc.text(`Cantidad`, margin + 85, yPosition);
+            doc.text(`Valor Unitario`, margin + 120, yPosition);
+
+            // Alineación del "Total" a la derecha
+            const totalText = 'Total';
+            const textWidthTotal = doc.getTextWidth(totalText);
+            const rightMargin = 10;  // Espacio adicional para alejarlo un poco del borde derecho
+            doc.text(totalText, pageWidth - margin - textWidthTotal - rightMargin, yPosition);
+
+            // Continuar con los productos y totales...
+            yPosition += 10;
+            doc.text(` ${document.getElementById('producto1').value}`, margin + 8, yPosition);
+            doc.text(` ${document.getElementById('cantidad1').value}`, margin + 90, yPosition);
+            doc.text(` S/ ${document.getElementById('precio1').value}`, margin + 125, yPosition);
+
+            // Alineación del total1 a la derecha
+            const total1Text =`S/ ${document.getElementById('total1').value}`;
+            const textWidthTotal1 = doc.getTextWidth(total1Text);
+            doc.text(total1Text, pageWidth - margin - textWidthTotal1 - rightMargin, yPosition);
+
+            // Si existe un segundo producto 2
+            if (document.getElementById('producto2').value) {
+                yPosition += 7;
+                doc.text(` ${document.getElementById('producto2').value}`, margin + 8, yPosition);
+                doc.text(` ${document.getElementById('cantidad2').value}`, margin + 90, yPosition);
+                doc.text(` S/ ${document.getElementById('precio2').value}`, margin + 125, yPosition);
+
+                // Alineación del total2 a la derecha
+                const total2Text =`S/ ${document.getElementById('total2').value}`;
+                const textWidthTotal2 = doc.getTextWidth(total2Text);
+                doc.text(total2Text, pageWidth - margin - textWidthTotal2 - rightMargin, yPosition);
+            }
+
+            // Alineación a la derecha para "Total General" y "Expresión en letras"
+
+
+// Establecer la fuente a negrita y el tamaño
+doc.setFont('helvetica', 'bold');  // Establecer la fuente a negrita (bold)
+doc.setFontSize(14);  // Establecer el tamaño de la letra a 14 (puedes cambiarlo a tu preferencia)
+
+// Alineación a la derecha para "Total General"
+const textWidthTotalGeneral = doc.getTextWidth(`Total General: S/ ${document.getElementById('totalGeneral').value}`);
+const textRightTotalGeneral = pageWidth - margin - textWidthTotalGeneral - 10;  // Calcular la posición para "Total General"
+
+// Total general alineado a la derecha
+doc.text(`Importe Total: S/ ${document.getElementById('totalGeneral').value}`, textRightTotalGeneral, margin + 154);  // Usar la posición calculada para alinearlo a la derecha
+
+
+
+// Establecer la fuente a negrita y el tamaño
+doc.setFont('helvetica', 'normal');  // Establecer la fuente a negrita (bold)
+doc.setFontSize(11);  // Establecer el tamaño de la letra a 14 (puedes cambiarlo a tu preferencia)
+
+// Alineación a la derecha para "Expresión en letras"
+const textWidthTotalLetras = doc.getTextWidth(`${document.getElementById('totalLetras').value}`);
+const textRightTotalLetras = pageWidth - margin - textWidthTotalLetras - 10;  // Calcular la posición para "Expresión en letras"
+
+// Expresión en letras alineada a la derecha
+doc.text(`${document.getElementById('totalLetras').value}`, textRightTotalLetras, margin + 106);  // Usar la posición calculada para alinearlo a la derecha
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // Guardar el PDF
+            doc.save('boleta-de-venta.pdf');
+
+            // Limpiar los campos del formulario después de generar el PDF
+            const form = document.getElementById('boleta-form');
+            form.reset();
+		    document.getElementById('fecha').value = new Date().toLocaleDateString(); // Mantener la fecha actual
+			    document.getElementById('empresa').value = empresa;  // Mantener el valor de empresa
+    document.getElementById('direccion').value = direccion;  // Mantener el valor de dirección
+    document.getElementById('ruc').value = ruc;  // Mantener el valor de RUC
+
+        }
+
+        // Evento para el formulario de boleta
+        document.getElementById('boleta-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            emitirPDF();
+        });
+
+        // Ejecutar la función para mostrar la fecha cuando se carga la página
+        window.onload = function() {
+            obtenerFechaActual();
+        }
+    </script>
+
+</body>
+</html>
